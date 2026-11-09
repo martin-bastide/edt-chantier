@@ -4,10 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#173b32">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./icon-192.png">
   <title>Chantier Planner — Planification paysagère</title>
   <style>
     :root{--green:#173b32;--green2:#28634f;--mint:#eaf2ed;--ink:#202a26;--muted:#68756f;--line:#dce4df;--paper:#fff;--bg:#f4f6f4;--danger:#9b3028}
     *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+    #offline-banner{display:none;background:#9b3028;color:#fff;text-align:center;padding:8px;font-size:0.85rem;font-weight:600}
     header{background:var(--green);color:white;padding:22px max(18px,calc((100% - 1180px)/2));}
     header .eyebrow{opacity:.75;text-transform:uppercase;letter-spacing:.12em;font-size:.72rem;font-weight:700}
     header h1{margin:3px 0;font-size:clamp(1.4rem,3vw,2rem)}header p{margin:0;color:#d6e4dc}
@@ -46,6 +49,7 @@
   </style>
 </head>
 <body>
+<div id="offline-banner">Vous êtes hors ligne. Utilisation de la version enregistrée.</div>
 <header>
   <div class="eyebrow">Outil professionnel</div>
   <h1>Chantier Planner</h1>
@@ -58,7 +62,7 @@
       <h2>Type de chantier</h2>
       <label for="chantier-select">Choisir un modèle</label>
       <select id="chantier-select" disabled><option>Chargement des chantiers…</option></select>
-      <p class="hint">Les modèles et valeurs sont chargés depuis chantiers.json.</p>
+      <p class="hint">Les modèles et valeurs sont chargés depuis chantiers.json[cite: 1].</p>
     </div>
     <div class="panel">
       <h2>Informations du chantier</h2>
@@ -88,7 +92,7 @@
     </div>
   </section>
 </main>
-<footer>Chantier Planner · Les modifications restent dans cette page et ne modifient pas le fichier JSON.</footer>
+<footer>Chantier Planner · Les modifications restent dans cette page et ne modifient pas le fichier JSON[cite: 1].</footer>
 <script>
 "use strict";
 
@@ -101,6 +105,15 @@ let state = new Map();
 
 // Initialiser la date de début à aujourd'hui
 document.getElementById("date-debut").valueAsDate = new Date();
+
+// Gestion de l'indicateur hors ligne
+const offlineBanner = document.getElementById("offline-banner");
+function updateOnlineStatus() {
+  offlineBanner.style.display = navigator.onLine ? "none" : "block";
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+updateOnlineStatus();
 
 function showError(message) {
   errorBox.style.display = "block";
@@ -251,7 +264,7 @@ function exportICS() {
   }
 
   let currDate = new Date(startDate.getTime());
-  let currSlot = 0; // 0: 08:00-12:00, 1: 14:00-18:00
+  let currSlot = 0;
 
   function formatDateStamp(d) {
     const pad = n => String(n).padStart(2, '0');
@@ -334,6 +347,16 @@ document.getElementById("select-all").addEventListener("click", () => { current.
 document.getElementById("select-none").addEventListener("click", () => { current.taches.forEach(t => state.get(t.id).checked = false); render(); });
 document.getElementById("export-ics").addEventListener("click", exportICS);
 document.getElementById("print").addEventListener("click", () => window.print());
+
+// Enregistrement du Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('Service Worker enregistré, scope:', reg.scope))
+      .catch(err => console.error('Erreur Service Worker:', err));
+  });
+}
+
 loadData();
 </script>
 </body>
