@@ -1,0 +1,23 @@
+{
+  "name": "Chantier Planner",
+  "short_name": "ChantierPlanner",
+  "description": "Outil professionnel de préparation et d'estimation des interventions paysagères.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f4",
+  "theme_color": "#173b32",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
