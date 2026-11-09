@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173b32">
+  <title>Chantier Planner — Planification paysagère</title>
+  <style>
+    :root{--green:#173b32;--green2:#28634f;--mint:#eaf2ed;--ink:#202a26;--muted:#68756f;--line:#dce4df;--paper:#fff;--bg:#f4f6f4;--danger:#9b3028}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+    header{background:var(--green);color:white;padding:22px max(18px,calc((100% - 1180px)/2));}
+    header .eyebrow{opacity:.75;text-transform:uppercase;letter-spacing:.12em;font-size:.72rem;font-weight:700}
+    header h1{margin:3px 0;font-size:clamp(1.4rem,3vw,2rem)}header p{margin:0;color:#d6e4dc}
+    main{max-width:1180px;margin:24px auto;padding:0 18px 48px;display:grid;gap:18px}
+    .panel{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 3px 14px #1a302008}
+    .panel h2{font-size:1.08rem;margin:0 0 14px;color:var(--green)}
+    .top-grid{display:grid;grid-template-columns:minmax(220px,1fr) 2fr;gap:18px}
+    .fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    label{display:block;font-size:.82rem;font-weight:650;color:#46534d;margin-bottom:5px}
+    input,select,textarea{font:inherit;width:100%;border:1px solid #cbd6cf;border-radius:8px;padding:10px 11px;background:#fff;color:var(--ink);min-width:0}
+    input:focus,select:focus{outline:3px solid #28634f22;border-color:var(--green2)}
+    .company-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .hint{color:var(--muted);font-size:.82rem;margin:8px 0 0}
+    .toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+    .toolbar h2{margin:0}.summary{display:flex;gap:10px;flex-wrap:wrap}
+    .stat{background:var(--mint);padding:8px 12px;border-radius:9px;font-size:.88rem}.stat strong{color:var(--green)}
+    .task-list{display:grid;gap:10px}
+    .task{border:1px solid var(--line);border-radius:11px;overflow:hidden}
+    .task-main{display:grid;grid-template-columns:auto minmax(180px,1fr) 105px 105px;gap:12px;align-items:center;padding:13px}
+    .task-main input[type=checkbox]{width:18px;height:18px;accent-color:var(--green2)}
+    .task-name{font-weight:680}.task-meta{font-size:.82rem;color:var(--muted);margin-top:3px}
+    .number-field label{font-size:.72rem;margin-bottom:3px}.number-field input{padding:7px 8px}
+    .task-details{border-top:1px solid var(--line);padding:10px 14px 12px 44px;background:#fbfcfb;font-size:.85rem}
+    .detail-row{margin:4px 0}.detail-label{font-weight:700;color:#526159}
+    .subtasks{margin:5px 0 5px 18px;padding:0}.subtasks li{padding:2px 0}
+    .disabled-task{opacity:.55}.disabled-task .task-name{text-decoration:line-through}
+    .empty{padding:24px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px}
+    .error{display:none;background:#fff0ee;color:var(--danger);border:1px solid #e8b7b2;padding:14px;border-radius:10px;white-space:pre-wrap}
+    .actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}
+    button{border:0;border-radius:9px;padding:10px 15px;font:inherit;font-weight:650;cursor:pointer}
+    .primary{background:var(--green);color:#fff}.secondary{background:var(--mint);color:var(--green)}
+    footer{text-align:center;color:var(--muted);font-size:.78rem;padding:0 18px 24px}
+    @media(max-width:700px){main{margin:14px auto;padding:0 12px 30px}.panel{padding:15px}.top-grid{grid-template-columns:1fr}.fields{grid-template-columns:1fr 1fr}.task-main{grid-template-columns:auto minmax(0,1fr) 82px 82px;gap:8px;padding:11px 9px}.task-details{padding-left:36px}.number-field input{padding:7px 5px;font-size:.9rem}.task-name{font-size:.91rem}}
+    @media(max-width:420px){.task-main{grid-template-columns:auto minmax(0,1fr) 76px 76px}.task-meta{font-size:.75rem}.number-field label{font-size:.67rem}.fields{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Outil professionnel</div>
+  <h1>Chantier Planner</h1>
+  <p>Préparez et estimez vos interventions paysagères.</p>
+</header>
+<main>
+  <div id="error" class="error" role="alert"></div>
+  <section class="top-grid">
+    <div class="panel">
+      <h2>Type de chantier</h2>
+      <label for="chantier-select">Choisir un modèle</label>
+      <select id="chantier-select" disabled><option>Chargement des chantiers…</option></select>
+      <p class="hint">Les modèles et valeurs sont chargés depuis chantiers.json.</p>
+    </div>
+    <div class="panel">
+      <h2>Informations du chantier</h2>
+      <div class="fields company-fields">
+        <div><label for="entreprise">Entreprise</label><input id="entreprise" placeholder="Nom de l'entreprise"></div>
+        <div><label for="telephone">Téléphone / e-mail</label><input id="telephone" placeholder="Coordonnées"></div>
+        <div><label for="client">Client</label><input id="client" placeholder="Nom du client"></div>
+        <div><label for="adresse">Adresse du chantier</label><input id="adresse" placeholder="Adresse"></div>
+      </div>
+    </div>
+  </section>
+  <section class="panel">
+    <div class="toolbar">
+      <h2 id="project-title">Tâches du chantier</h2>
+      <div class="summary">
+        <div class="stat">Durée sélectionnée : <strong id="total-days">0 j</strong></div>
+        <div class="stat">Tâches : <strong id="total-tasks">0 / 0</strong></div>
+      </div>
+    </div>
+    <div id="task-list" class="task-list"><div class="empty">Chargement des données…</div></div>
+    <div class="actions">
+      <button class="secondary" id="select-all" type="button">Tout sélectionner</button>
+      <button class="secondary" id="select-none" type="button">Tout désélectionner</button>
+      <button class="primary" id="print" type="button">Imprimer / PDF</button>
+    </div>
+  </section>
+</main>
+<footer>Chantier Planner · Les modifications restent dans cette page et ne modifient pas le fichier JSON.</footer>
+<script>
+"use strict";
+
+const select = document.getElementById("chantier-select");
+const list = document.getElementById("task-list");
+const errorBox = document.getElementById("error");
+let chantiers = [];
+let current = null;
+let state = new Map();
+
+function showError(message) {
+  errorBox.style.display = "block";
+  errorBox.textContent = message;
+  list.innerHTML = '<div class="empty">Les tâches ne peuvent pas être affichées tant que les données ne sont pas disponibles.</div>';
+}
+function lineFromPosition(source, position) {
+  return source.slice(0, position).split("\n").length;
+}
+function validateData(data) {
+  if (!data || !Array.isArray(data.chantiers)) throw new Error('Structure invalide : le fichier doit contenir une liste "chantiers".');
+  data.chantiers.forEach((c, ci) => {
+    if (!c.id || !c.nom || !Array.isArray(c.taches)) throw new Error(`Chantier ${ci + 1} : champs id, nom ou taches manquants.`);
+    const ids = new Set(c.taches.map(t => t.id));
+    c.taches.forEach((t, ti) => {
+      if (!t.id || !t.nom || typeof t.duree_jours !== "number" || typeof t.effectif !== "number" || !Array.isArray(t.apres)) {
+        throw new Error(`Chantier "${c.nom}", tâche ${ti + 1} : données obligatoires manquantes ou invalides.`);
+      }
+      if (t.duree_jours < 0 || t.duree_jours * 2 % 1 !== 0 || t.effectif < 0) {
+        throw new Error(`Chantier "${c.nom}", tâche "${t.nom}" : durée (pas de 0,5 jour) ou effectif invalide.`);
+      }
+      if (t.apres.some(id => !ids.has(id))) throw new Error(`Chantier "${c.nom}", tâche "${t.nom}" : une dépendance "apres" référence un id inconnu.`);
+      if (t.sous_taches !== undefined) {
+        if (!Array.isArray(t.sous_taches) || t.sous_taches.some(s => !s.nom || typeof s.duree_jours !== "number" || s.duree_jours < 0 || s.duree_jours * 2 % 1 !== 0))
+          throw new Error(`Chantier "${c.nom}", tâche "${t.nom}" : sous_taches invalides.`);
+      }
+    });
+  });
+}
+function taskDuration(task) {
+  return Array.isArray(task.sous_taches)
+    ? task.sous_taches.reduce((sum, sub) => sum + sub.duree_jours, 0)
+    : task.duree_jours;
+}
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+}
+function render() {
+  if (!current) return;
+  document.getElementById("project-title").textContent = current.nom;
+  list.innerHTML = "";
+  if (!current.taches.length) {
+    list.innerHTML = '<div class="empty">Aucune tâche dans ce modèle.</div>';
+    updateTotals(); return;
+  }
+  const byId = new Map(current.taches.map(t => [t.id, t]));
+  current.taches.forEach(task => {
+    const s = state.get(task.id);
+    const dependencies = task.apres.length
+      ? task.apres.map(id => byId.get(id)?.nom || id).join(", ")
+      : "Aucune dépendance renseignée";
+    const subtaskHtml = Array.isArray(task.sous_taches)
+      ? `<div class="detail-row"><span class="detail-label">Sous-tâches :</span><ul class="subtasks">${task.sous_taches.map(sub => `<li>${escapeHtml(sub.nom)} — ${sub.duree_jours} j</li>`).join("")}</ul><span class="detail-label">Durée calculée :</span> ${taskDuration(task)} j (somme des sous-tâches)</div>`
+      : "";
+    const el = document.createElement("article");
+    el.className = "task" + (s.checked ? "" : " disabled-task");
+    el.innerHTML = `
+      <div class="task-main">
+        <input type="checkbox" aria-label="Inclure ${escapeHtml(task.nom)}" ${s.checked ? "checked" : ""}>
+        <div><div class="task-name">${escapeHtml(task.nom)}</div><div class="task-meta">Matériel : ${escapeHtml(task.materiel || "Non précisé")}</div></div>
+        <div class="number-field"><label>Durée (jours)</label><input type="number" min="0" step="0.5" value="${s.duration}" aria-label="Durée en jours"></div>
+        <div class="number-field"><label>Effectif</label><input type="number" min="0" step="1" value="${s.staff}" aria-label="Effectif"></div>
+      </div>
+      <div class="task-details">
+        ${subtaskHtml}
+        <div class="detail-row"><span class="detail-label">Dépendances :</span> ${escapeHtml(dependencies)}</div>
+        ${task.commentaire ? `<div class="detail-row"><span class="detail-label">Commentaire :</span> ${escapeHtml(task.commentaire)}</div>` : ""}
+      </div>`;
+    const inputs = el.querySelectorAll('input');
+    inputs[0].addEventListener("change", e => { s.checked = e.target.checked; render(); });
+    inputs[1].addEventListener("change", e => {
+      const n = Number(e.target.value);
+      if (Number.isFinite(n) && n >= 0 && n * 2 % 1 === 0) s.duration = n;
+      else e.target.value = s.duration;
+      updateTotals();
+    });
+    inputs[2].addEventListener("change", e => {
+      const n = Number(e.target.value);
+      if (Number.isInteger(n) && n >= 0) s.staff = n;
+      else e.target.value = s.staff;
+    });
+    list.appendChild(el);
+  });
+  updateTotals();
+}
+function updateTotals() {
+  if (!current) return;
+  const chosen = current.taches.filter(t => state.get(t.id)?.checked);
+  const total = chosen.reduce((sum, t) => sum + Number(state.get(t.id).duration), 0);
+  document.getElementById("total-days").textContent = `${Number(total.toFixed(2))} j`;
+  document.getElementById("total-tasks").textContent = `${chosen.length} / ${current.taches.length}`;
+}
+function chooseProject(id) {
+  current = chantiers.find(c => c.id === id) || chantiers[0];
+  state = new Map(current.taches.map(t => [t.id, {
+    checked: true,
+    duration: taskDuration(t),
+    staff: t.effectif
+  }]));
+  render();
+}
+async function loadData() {
+  try {
+    const response = await fetch("chantiers.json", {cache: "no-store"});
+    if (!response.ok) throw new Error(`Impossible de charger chantiers.json (HTTP ${response.status}). Vérifiez que le fichier est bien publié au même emplacement que index.html.`);
+    const source = await response.text();
+    let data;
+    try { data = JSON.parse(source); }
+    catch (err) {
+      const match = String(err.message).match(/position\s+(\d+)/i);
+      const line = match ? lineFromPosition(source, Number(match[1])) : null;
+      throw new Error(`Le fichier chantiers.json contient un JSON invalide${line ? ` (vers la ligne ${line})` : ""} : ${err.message}`);
+    }
+    validateData(data);
+    chantiers = data.chantiers;
+    if (!chantiers.length) throw new Error('Le fichier chantiers.json ne contient aucun chantier.');
+    select.innerHTML = "";
+    chantiers.forEach(c => {
+      const option = document.createElement("option");
+      option.value = c.id; option.textContent = c.nom; select.appendChild(option);
+    });
+    select.disabled = false;
+    chooseProject(chantiers[0].id);
+  } catch (err) {
+    showError(`Erreur de chargement des données : ${err.message}\\n\\nConseil : vérifiez le nom du fichier, sa syntaxe JSON et sa présence à côté de index.html.`);
+    console.error(err);
+  }
+}
+select.addEventListener("change", () => chooseProject(select.value));
+document.getElementById("select-all").addEventListener("click", () => { current.taches.forEach(t => state.get(t.id).checked = true); render(); });
+document.getElementById("select-none").addEventListener("click", () => { current.taches.forEach(t => state.get(t.id).checked = false); render(); });
+document.getElementById("print").addEventListener("click", () => window.print());
+loadData();
+</script>
+</body>
+</html>
